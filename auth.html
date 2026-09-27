@@ -1,0 +1,54 @@
+‎<!DOCTYPE html>
+‎<html>
+‎<head>
+‎<meta charset="UTF-8">
+‎<meta name="viewport" content="width=device-width,initial-scale=1">
+‎<title>TP Marketplace - Auth</title>
+‎<script src="https://js.paystack.co/v1/inline.js"></script>
+‎<style>
+‎*{box-sizing:border-box}
+‎body{font-family:Inter,Arial,sans-serif;background:#fffefb;padding:16px;max-width:420px;margin:auto}
+‎h2{font-size:22px;font-weight:900;text-align:center}
+‎.card{border:2.5px solid #000;border-radius:18px;padding:18px;box-shadow:6px 6px 0 #000}
+‎label{font-size:12px;font-weight:900;text-transform:uppercase;display:block;margin:10px 0 5px}
+‎input,select{width:100%;padding:13px;border:2.5px solid #000;border-radius:10px;font-weight:600}
+‎button{width:100%;padding:15px;border:2.5px solid #000;border-radius:12px;font-weight:900;box-shadow:4px 4px 0 #000;margin-top:12px}
+‎.black{background:#000;color:#fff} .yellow{background:#ffe600}
+‎.plan{border:2.5px dashed #000;border-radius:12px;padding:12px;margin-top:12px;display:none}
+‎.plan.active{display:block}
+‎</style>
+‎</head>
+‎<body>
+‎<h2>TP MARKETPLACE 🔐</h2>
+‎<div class="card">
+‎<button id="showLogin" class="black">LOGIN</button>
+‎<button id="showRegister" class="yellow">REGISTER</button>
+‎<div id="msg" style="text-align:center;font-weight:700;margin:10px 0"></div>
+‎<div id="loginBox">
+‎<input id="loginEmail" placeholder="email"><input id="loginPass" type="password" placeholder="password">
+‎<button id="loginBtn" class="black">LOGIN</button>
+‎</div>
+‎<div id="registerBox" style="display:none">
+‎<input id="regName" placeholder="Full Name"><input id="regEmail" placeholder="Email"><input id="regPass" type="password" placeholder="Min 6 chars">
+‎<select id="regRole"><option value="buyer">Buyer - Free</option><option value="seller">Seller - ₦1,000</option></select>
+‎<div id="sellerPlan" class="plan"><b>₦1,000 one-time</b> to sell</div>
+‎<button id="regBtn" class="yellow">REGISTER & PAY IF SELLER</button>
+‎</div>
+‎</div>
+‎<script type="module">
+‎import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+‎const SUPABASE_URL = "https://pbfgxiwwyvrnrcacfsxy.supabase.co";
+‎const SUPABASE_ANON_KEY = "sb_publishable_Y4oS569IiPZv6MtkKfUyqw_j3D6CQtV";
+‎const PAYSTACK_PUBLIC_KEY = "pk_live_d77d254d82edccc8ff474b8a5e0f10874cf93f49"; // PUT YOUR KEY
+‎const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+‎const msg=document.getElementById('msg');
+‎const showMsg=(t,e)=>{msg.style.color=e?'red':'green';msg.textContent=t}
+‎document.getElementById('showLogin').onclick=()=>{loginBox.style.display='block';registerBox.style.display='none'}
+‎document.getElementById('showRegister').onclick=()=>{loginBox.style.display='none';registerBox.style.display='block'}
+‎regRole.onchange=()=>{sellerPlan.classList.toggle('active',regRole.value==='seller')}; regRole.onchange();
+‎document.getElementById('loginBtn').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:loginEmail.value,password:loginPass.value}); if(error)return showMsg(error.message,1); showMsg('Login ok'); location.href='index.html'}
+‎document.getElementById('regBtn').onclick=async()=>{const name=regName.value,email=regEmail.value,pass=regPass.value,role=regRole.value; if(role==='buyer'){const {error}=await supabase.auth.signUp({email,password:pass,options:{data:{full_name:name,role}}}); if(error)return showMsg(error.message,1); showMsg('Check email to verify'); return} const h=PaystackPop.setup({key:PAYSTACK_PUBLIC_KEY,email,amount:100000,ref:'TP_'+Date.now(),callback:async(r)=>{const {error}=await supabase.auth.signUp({email,password:pass,options:{data:{full_name:name,role,paid:true,ref:r.reference}}}); if(error)return showMsg(error.message,1); showMsg('Seller paid & created! Login now'); loginBox.style.display='block';registerBox.style.display='none'},onClose:()=>showMsg('Payment cancelled',1)}); h.openIframe()}
+‎</script>
+‎</body>
+‎</html>
+‎
