@@ -1,0 +1,83 @@
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+body{font-family:Inter,Arial,sans-serif;padding:16px;max-width:600px;margin:auto;background:#fff;padding-bottom:80px}
+.card{border:2.5px solid #000;border-radius:16px;padding:12px;margin:10px 0;box-shadow:4px 4px 0 #000;display:flex;gap:10px;align-items:center}
+img{width:80px;height:80px;border-radius:12px;border:2px solid #000;object-fit:cover}
+button{padding:14px;border-radius:16px;border:2.5px solid #000;font-weight:900;width:100%;cursor:pointer;box-shadow:4px 4px 0 #000;margin:8px 0}
+.black{background:#000;color:#fff}.white{background:#fff;color:#000}
+.total{border:2.5px solid #000;border-radius:16px;padding:16px;text-align:center;background:#000;color:#fff;font-size:20px;font-weight:900;box-shadow:4px 4px 0 #000}
+</style></head><body>
+<h2>🛒 My Cart</h2>
+<div id="list">Loading...</div>
+<div id="totalBox" class="total"></div>
+<button class="black" id="checkoutBtn">Checkout with Paystack LIVE</button>
+<a href="index.html" style="display:block;text-align:center;font-weight:800;margin-top:12px;color:#000">← Continue shopping</a>
+<div id="msg" style="font-weight:800;margin-top:10px"></div>
+
+<script type="module">
+import {supabase} from './supabaseClient.js'
+
+// PUT YOUR LIVE KEY HERE
+const PAYSTACK_PUBLIC_KEY = 'pk_live_xxxxxxxxxxxxx' // <-- REPLACE
+
+let cart = JSON.parse(localStorage.getItem('tobex_cart')||'[]')
+
+function render(){
+ if(cart.length==0){list.innerHTML='<div class="card">Cart empty</div>'; totalBox.textContent='Total: ₦0'; return}
+ let total=0; let html=''
+ for(let i in cart){
+  let c=cart[i]; total+=Number(c.price||0)*Number(c.qty||1)
+  html+='<div class="card"><img src="'+(c.image||'')+'"><div><b>'+c.title+'</b><br>₦'+Number(c.price).toLocaleString()+' x '+c.qty+'<br><button class="white" style="width:auto;padding:6px 12px" onclick="removeItem('+i+')">Remove</button></div></div>'
+ }
+ list.innerHTML=html
+ totalBox.textContent='Total: ₦'+total.toLocaleString()
+ return total
+}
+let totalAmount = render()
+
+window.removeItem=(i)=>{cart.splice(i,1); localStorage.setItem('tobex_cart',JSON.stringify(cart)); location.reload()}
+
+document.getElementById('checkoutBtn').addEventListener('click', async()=>{
+ if(cart.length==0) return alert('Cart empty')
+ let {data:{user}} = await supabase.auth.getUser()
+ let email = user?.email || prompt('Enter your email for receipt:')
+ if(!email) return alert('Email required')
+
+ if(typeof PaystackPop === 'undefined'){ alert('Paystack script blocked! Check internet or disable adblocker'); return }
+
+ let amountKobo = Math.round(totalAmount*100)
+ let handler = PaystackPop.setup({
+  key: PAYSTACK_PUBLIC_KEY,
+  email: email,
+  amount: amountKobo,
+  currency: 'NGN',
+  ref: 'TOBEX_'+Date.now(),
+  callback: async function(res){
+   document.getElementById('msg').textContent='Payment successful! Ref: '+res.reference+' Saving order...'
+   // Save order for adminpage.html
+   try{
+    for(let c of cart){
+     let sellerEarn = Math.round(c.price * 0.9)
+     let commission = Math.round(c.price * 0.1)
+     await supabase.from('orders').insert({
+      product_id: c.id,
+      buyer_id: user?.id||null,
+      amount: c.price,
+      seller_earnings: sellerEarn,
+      commission: commission,
+      paystack_ref: res.reference,
+      status: 'paid',
+      delivery_status: 'processing'
+     })
+    }
+    localStorage.removeItem('tobex_cart')
+    document.getElementById('msg').innerHTML='✅ Order saved! <a href="index.html">Continue</a>'
+    alert('✅ Payment success! Tobex will see commission in adminpage.html')
+   }catch(e){alert('Paid but order save failed: '+e.message)}
+  },
+  onClose: function(){ alert('Checkout closed') }
+ })
+ handler.openIframe()
+})
+</script></body></html>

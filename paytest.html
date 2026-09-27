@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://js.paystack.co/v1/inline.js"></script></head><body style="padding:40px">
+<h2>Paystack Test</h2>
+<button id="pay" style="padding:20px;font-weight:900;background:#00ff88">CLICK TO TEST ₦1000 POPUP</button>
+<div id="log" style="margin-top:20px;font-weight:800"></div>
+<script>
+const KEY='pk_live_d77d254d82edccc8ff474b8a5e0f10874cf93f49'
+document.getElementById('pay').onclick=()=>{
+ log.textContent='Checking Paystack...'
+ if(typeof PaystackPop==='undefined'){ log.textContent='FAIL: PaystackPop not loaded - check internet/adblock'; return }
+ log.textContent='Paystack loaded, opening...'
+ try{
+  PaystackPop.setup({
+   key: KEY,
+   email:'test@test.com',
+   amount:1000*100,
+   currency:'NGN',
+   ref:'TEST_'+Date.now(),
+   callback:(r)=>{ log.textContent='SUCCESS '+r.reference; alert('Paystack works! Ref: '+r.reference) },
+   onClose:()=>{ log.textContent='Closed by user' }
+  }).openIframe()
+ }catch(e){ log.textContent='Error: '+e.message; alert(e.message) }
+}
+</script></body></html>

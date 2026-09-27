@@ -1,0 +1,130 @@
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><script src="https://js.paystack.co/v1/inline.js"></script><style>
+*{box-sizing:border-box}
+body{font-family:Inter,Arial,sans-serif;padding:14px;background:#fafaf9;max-width:520px;margin:auto;color:#111;padding-bottom:90px}
+#box{background:#fff;border:2.5px solid #000;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #000;margin-bottom:14px;padding-bottom:14px}
+#box img{width:100%;border-bottom:2.5px solid #000;max-height:380px;object-fit:cover;display:block}
+#box h2{padding:14px 14px 4px;font-size:20px;font-weight:900;letter-spacing:-0.6px;line-height:1.2}
+#box h1{padding:0 14px;font-size:26px;font-weight:900}
+#box p{padding:6px 14px;font-size:14px;line-height:1.4;font-weight:600}
+button{width:100%;padding:15px;border-radius:14px;font-weight:900;font-size:15px;border:2.5px solid #000;margin:7px 0;cursor:pointer;box-shadow:3px 3px 0 #000;transition:0.15s}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.black{background:#000;color:#fff}
+.white{background:#fff;color:#000}
+.card{border:2.5px solid #000;border-radius:18px;padding:14px;margin:14px 0;background:#fff;box-shadow:4px 4px 0 #000}
+.card h3{font-size:16px;font-weight:900;margin-bottom:10px;letter-spacing:-0.4px}
+.review{border-bottom:1.5px solid #eee;padding:10px 0;font-size:13px;font-weight:600}
+.review small{color:#777;font-size:11px}
+.card select,.card input{width:100%;padding:12px;margin:8px 0;border:2.5px solid #000;border-radius:12px;font-weight:700;outline:none;box-shadow:2px 2px 0 #000;background:#fff}
+.card select:focus,.card input:focus{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000}
+a{color:#000;font-weight:900;text-decoration:none;border-bottom:2px solid #000}
+p:last-child{margin-top:18px}
+</style></head><body>
+
+<div id="box">Loading real product...</div>
+
+<button class="black" onclick="pay()">💳 Buy Now - Paystack LIVE</button>
+<button class="white" onclick="addCart()">🛒 Add to Cart</button>
+<button class="white" onclick="viewStore()">🏪 View Seller Store</button>
+<button class="white" onclick="chatSeller()">💬 Chat Seller</button>
+
+<div class="card">
+<h3>⭐ Reviews & Ratings</h3>
+<div id="reviews">Loading reviews...</div>
+<hr style="border:1.5px solid #000;margin:12px 0">
+<p><b>Add your review:</b></p>
+<select id="rating">
+<option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+<option value="4">⭐⭐⭐⭐ 4 - Good</option>
+<option value="3">⭐⭐⭐ 3 - Average</option>
+<option value="2">⭐⭐ 2 - Poor</option>
+<option value="1">⭐ 1 - Bad</option>
+</select>
+<input id="comment" placeholder="Write review comment">
+<button class="black" onclick="addReview()">Post Review</button>
+</div>
+
+<div class="card">
+<h3>🚚 Delivery Info</h3>
+<p>✅ Verified ID - Tobex Property <b>08163382655</b></p>
+<p>Delivery: <b>2-5 days nationwide</b><br>Seller earns 90% | Your commission 10%</p>
+</div>
+
+<p><a href="index.html">← Home</a> | <a href="cart.html">🛒 Cart</a> | <a href="admin.html">Admin</a></p>
+
+<script type="module">
+import {supabase,PAYSTACK_KEY} from './supabaseClient.js'
+
+let id = new URLSearchParams(location.search).get('id')
+let prod
+
+let {data, error} = await supabase.from('products').select('*').eq('id',id).single()
+if(error){document.getElementById('box').innerHTML='Product not found'; throw error}
+prod = data
+
+document.getElementById('box').innerHTML=`
+<img src="${prod.images?.[0]||''}">
+<h2>${prod.title}</h2>
+<h1>₦${Number(prod.price).toLocaleString()}</h1>
+<p>${prod.description||''}</p>
+<p><b>Category:</b> ${prod.category||''}</p>
+<p>✅ Verified ID - Tobex Property 08163382655</p>
+`
+
+async function loadReviews(){
+ let {data:revs}=await supabase.from('reviews').select('*').eq('product_id',prod.id).order('created_at',{ascending:false})
+ document.getElementById('reviews').innerHTML=revs?.length?revs.map(r=>`<div class="review">⭐ ${r.rating}/5 - ${r.comment}<br><small>${new Date(r.created_at).toLocaleDateString()}</small></div>`).join(''):'No reviews yet. Be first!'
+}
+loadReviews()
+
+window.viewStore=()=>{
+ if(!prod.seller_id) alert('This old product has no seller store - new products will have')
+ else location.href=`store.html?id=${prod.seller_id}`
+}
+window.chatSeller=()=>{
+ if(!prod.seller_id) alert('No seller id - chat works for new products after auth upgrade')
+ else location.href=`messages.html?to=${prod.seller_id}&product=${prod.id}`
+}
+window.addCart=()=>{
+ let cart=JSON.parse(localStorage.getItem('tp_cart')||'[]')
+ let exists=cart.find(c=>c.id==prod.id)
+ if(exists) exists.qty+=1; else cart.push({id:prod.id,qty:1})
+ localStorage.setItem('tp_cart',JSON.stringify(cart))
+ alert('Added to cart! 🛒'); location.href='cart.html'
+}
+window.addReview=async()=>{
+ let {data:{user}}=await supabase.auth.getUser()
+ if(!user){alert('Please login at auth.html to review'); return}
+ let {error}=await supabase.from('reviews').insert({product_id:prod.id,buyer_id:user.id,rating:parseInt(rating.value),comment:comment.value})
+ if(error) alert(error.message); else {comment.value=''; loadReviews()}
+}
+window.pay=async()=>{
+ let {data:{user}}=await supabase.auth.getUser()
+ let comm=Math.floor(prod.price*0.1), earn=prod.price-comm
+ let h=PaystackPop.setup({
+  key:PAYSTACK_KEY,
+  email:user?.email||'customer@tpmarketplace.com',
+  amount:prod.price*100,
+  currency:'NGN',
+  ref:'TP_'+Date.now(),
+  metadata:{custom_fields:[{display_name:'Commission for Tobex 08163382655',variable_name:'commission',value:comm},{display_name:'Seller ID',variable_name:'seller_id',value:prod.seller_id}]},
+  callback:async(r)=>{
+   await supabase.from('orders').insert({
+    buyer_id:user?.id||null,
+    seller_id:prod.seller_id||null,
+    product_id:prod.id,
+    product_title:prod.title,
+    amount:prod.price,
+    commission:comm,
+    seller_earnings:earn,
+    paystack_ref:r.reference,
+    status:'paid',
+    delivery_status:'processing',
+    delivery_address:'Customer address'
+   })
+   alert('PAID! ₦'+prod.price.toLocaleString()+' success.\nYour 10% commission for 08163382655: ₦'+comm.toLocaleString()+'\nRef: '+r.reference);location.href='admin.html'
+  },
+  onClose:()=>alert('Payment cancelled')
+ })
+ h.openIframe()
+}
+</script></body></html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}
+body{font-family:Inter,Arial,sans-serif;padding:16px;max-width:720px;margin:auto;background:#0f0f0f;color:#fff;padding-bottom:90px}
+h2{border:2.5px solid #fff;border-radius:14px;padding:12px;background:#fff;color:#000;font-weight:900;box-shadow:4px 4px 0 #fff;text-align:center}
+.card{border:2.5px solid #fff;border-radius:16px;padding:14px;margin:12px 0;background:#1a1a1a;box-shadow:4px 4px 0 #fff}
+img{width:100%;border-radius:12px;border:2px solid #fff;margin-top:8px;max-height:260px;object-fit:contain}
+button{padding:12px 14px;border-radius:12px;border:2px solid #fff;font-weight:900;cursor:pointer;margin:4px;box-shadow:2px 2px 0 #fff}
+button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #fff}
+.white{background:#fff;color:#000}.green{background:#00ff88;color:#000}.red{background:#ff4444;color:#fff}.yellow{background:#ffe600;color:#000}
+input{width:100%;padding:14px;border-radius:12px;border:2.5px solid #fff;background:#000;color:#fff;font-weight:800;margin:8px 0;outline:none}
+small{color:#aaa;font-size:11px}
+.tabs{display:flex;gap:8px;margin:14px 0}
+.tabs button{flex:1}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:900}
+</style></head><body>
+<h2>🔒 TOBEX SUPER ADMIN</h2>
+
+<div id="lock" class="card">
+<p style="font-weight:900">Tobex Only Access</p>
+<input id="email" type="email" placeholder="tobexproperty@gmail.com">
+<input id="pin" type="password" placeholder="@Therealtobex200205">
+<button class="white" id="unlockBtn">Unlock Dashboard</button>
+<div id="err" style="color:#ff4444;font-weight:800;display:none;margin-top:8px"></div>
+</div>
+
+<div id="admin" style="display:none">
+<div class="tabs">
+<button class="yellow" id="tabSellers">Sellers KYC</button>
+<button class="white" id="tabOrders">Orders & Commission</button>
+</div>
+<div id="stats" class="card" style="background:#ffe600;color:#000"></div>
+<div id="content">Loading...</div>
+</div>
+
+<script type="module">
+import {supabase} from './supabaseClient.js'
+const SECRET_EMAIL = 'tobexproperty@gmail.com'
+const SECRET_PIN = '@Therealtobex200205'
+let allProfiles=[], allOrders=[], mode='sellers'
+
+const lockDiv=document.getElementById('lock')
+const adminDiv=document.getElementById('admin')
+const errDiv=document.getElementById('err')
+
+document.getElementById('unlockBtn').addEventListener('click',()=>{
+ let e=document.getElementById('email').value.trim().toLowerCase()
+ let p=document.getElementById('pin').value.trim()
+ if(e===SECRET_EMAIL.toLowerCase() && p===SECRET_PIN){
+  lockDiv.style.display='none'
+  adminDiv.style.display='block'
+  loadAll()
+ }else{
+  errDiv.style.display='block'
+  errDiv.textContent='Wrong Email or PIN'
+ }
+})
+
+async function loadAll(){
+ let res1=await supabase.from('profiles').select('*').order('created_at',{ascending:false})
+ allProfiles=res1.data||[]
+ let res2=await supabase.from('orders').select('*, products(title,price)').order('created_at',{ascending:false}).limit(100)
+ allOrders=res2.data||[]
+ render()
+}
+
+function render(){
+ let total1k=allProfiles.filter(x=>x.subscription_amount==1000).length
+ let total5k=allProfiles.filter(x=>x.subscription_amount==5000).length
+ let totalRevSub=allProfiles.reduce((s,x)=>s+(x.subscription_amount||0),0)
+ let totalCommission=allOrders.reduce((s,x)=>s+(x.commission||0),0)
+ let totalSales=allOrders.reduce((s,x)=>s+(x.amount||0),0)
+
+ document.getElementById('stats').innerHTML='<b>Sellers: '+allProfiles.length+' | Orders: '+allOrders.length+'</b><br>Subs: N'+totalRevSub.toLocaleString()+' (1k:'+total1k+' 5k:'+total5k+')<br>Sales: N'+totalSales.toLocaleString()+' | Your Commission: <b>N'+totalCommission.toLocaleString()+'</b>'
+
+ if(mode==='sellers'){
+  let html=''
+  for(let p of allProfiles){
+   let idPhoto=p.id_photo_url ? '<a href="'+p.id_photo_url+'" target="_blank"><img src="'+p.id_photo_url+'"></a>' : 'No ID'
+   let cacPhoto=p.cac_document_url ? '<a href="'+p.cac_document_url+'" target="_blank"><img src="'+p.cac_document_url+'"></a><br><a href="'+p.cac_document_url+'" target="_blank" style="color:#00ff88">Open CAC</a>' : '<small>No CAC - Unregistered</small>'
+   let exp=p.subscription_expiry ? new Date(p.subscription_expiry).toDateString() : 'N/A'
+   html+='<div class="card"><div style="display:flex;justify-content:space-between"><b>'+(p.store_name||'No store')+'</b><span class="badge" style="background:'+(p.business_type=='registered'?'#00ff88':'#ffe600')+';color:#000">'+(p.subscription_plan||'no plan')+' '+(p.verified?'OK':'')+'</span></div><small>'+(p.full_name||'')+' | '+p.email+'<br>'+(p.phone||'')+' | '+p.business_type+' | '+p.state+'<br>Paid: N'+(p.subscription_amount||0)+' | Ref:'+(p.paystack_ref||'')+'<br>Exp:'+exp+' | '+(p.post_limit_per_day||1)+'/day</small><br><br><b>ID '+(p.id_type||'')+'</b><br>'+idPhoto+'<br><br><b>CAC</b><br>'+cacPhoto+'<br><br><button class="green verifyBtn" data-id="'+p.id+'" data-v="true">Verify</button> <button class="red verifyBtn" data-id="'+p.id+'" data-v="false">Unverify</button> <button class="white viewBtn" data-id="'+p.id+'">View Store</button></div>'
+  }
+  document.getElementById('content').innerHTML=html||'No sellers'
+  document.querySelectorAll('.verifyBtn').forEach(b=>b.addEventListener('click',()=>verify(b.dataset.id,b.dataset.v==='true')))
+  document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click',()=>window.open('store.html?id='+b.dataset.id,'_blank')))
+ }else{
+  let table='<div class="card"><table><tr><th>Date</th><th>Product</th><th>Amount</th><th>Your Cut</th></tr>'
+  for(let o of allOrders){
+   table+='<tr><td><small>'+new Date(o.created_at).toLocaleDateString()+'</small></td><td>'+(o.products?.title||o.product_id)+'</td><td>N'+(o.amount||0)+'</td><td><b>N'+(o.commission||0)+'</b></td></tr>'
+  }
+  table+='</table></div>'
+  let cards=''
+  for(let o of allOrders){
+   cards+='<div class="card"><small>Ref:'+(o.paystack_ref||'')+'<br>'+new Date(o.created_at).toLocaleString()+'</small><br><b>'+(o.products?.title||'Product')+'</b> - N'+(o.amount||0)+'<br>Commission: <b style="color:#00ff88">N'+(o.commission||0)+'</b><br>Status: '+(o.status||'')+'/'+(o.delivery_status||'')+'<br><br><button class="green orderBtn" data-id="'+o.id+'" data-s="delivered">Delivered</button> <button class="white orderBtn" data-id="'+o.id+'" data-s="processing">Processing</button></div>'
+  }
+  document.getElementById('content').innerHTML=table+cards
+  document.querySelectorAll('.orderBtn').forEach(b=>b.addEventListener('click',()=>updateOrder(b.dataset.id,b.dataset.s)))
+ }
+}
+
+document.getElementById('tabSellers').addEventListener('click',()=>{mode='sellers'; render(); document.getElementById('tabSellers').className='yellow'; document.getElementById('tabOrders').className='white'})
+document.getElementById('tabOrders').addEventListener('click',()=>{mode='orders'; render(); document.getElementById('tabOrders').className='yellow'; document.getElementById('tabSellers').className='white'})
+
+async function verify(id,val){
+ let res=await supabase.from('profiles').update({verified:val}).eq('id',id)
+ if(res.error) alert(res.error.message); else loadAll()
+}
+async function updateOrder(id,status){
+ let res=await supabase.from('orders').update({delivery_status:status}).eq('id',id)
+ if(res.error) alert(res.error.message); else loadAll()
+}
+</script></body></html>

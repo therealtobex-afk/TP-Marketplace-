@@ -1,0 +1,129 @@
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><script src="https://js.paystack.co/v1/inline.js"></script><style>
+*{box-sizing:border-box}
+body{font-family:Inter,Arial,sans-serif;padding:16px;max-width:520px;margin:auto;background:#fafaf9;color:#111;padding-bottom:90px}
+h2{font-size:20px;font-weight:900;border:2.5px solid #000;background:#fff;padding:12px 14px;border-radius:14px;box-shadow:4px 4px 0 #000}
+#user,#planBox{padding:10px 14px;border:2.5px solid #000;border-radius:12px;font-size:13px;font-weight:800;margin-bottom:12px;box-shadow:3px 3px 0 #000}
+#user{background:#000;color:#fff}
+#planBox{background:#ffe600;color:#000;display:none}
+input,textarea,select{width:100%;padding:14px;margin:10px 0;border:2.5px solid #000;border-radius:14px;font-size:15px;font-weight:700;outline:none;background:#fff;box-shadow:3px 3px 0 #000}
+input:focus,textarea:focus,select:focus{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #000}
+textarea{min-height:90px}
+button{width:100%;padding:16px;background:#000;color:#fff;border:2.5px solid #000;border-radius:14px;font-weight:900;font-size:16px;cursor:pointer;box-shadow:4px 4px 0 #000;transition:0.15s;margin-top:6px}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+button:disabled{opacity:0.6}
+a{color:#000;font-weight:900;text-decoration:none;border-bottom:2px solid #000}
+</style></head><body>
+<h2>Sell - Tobex Property <span style="font-size:12px">08163382655</span></h2>
+<p id="user">Checking login...</p>
+<div id="planBox"></div>
+
+<input id="title" placeholder="Product title e.g Hisense table top fridge" value="Hisense table top fridge">
+<textarea id="desc" placeholder="Description">Working Perfectly Buy and Enjoy Call or WhatsApp 08163382655</textarea>
+<input id="price" type="number" placeholder="Price" value="135000">
+<select id="cat"><option>Electronics</option><option>Home & Furniture</option><option>Beauty & Personal</option><option>Fashion</option><option>Vehicles</option><option>Property</option><option>Foods</option><option>Trending</option></select>
+<input type="file" id="f1" accept="image/*">
+<button id="btn">Post Ad - REAL</button>
+<p style="text-align:center"><a href="index.html">← Back Home</a></p>
+
+<script type="module">
+import {supabase,PAYSTACK_KEY} from './supabaseClient.js'
+
+let {data:{user}} = await supabase.auth.getUser()
+if(!user){document.getElementById('user').textContent='❌ Not logged in - go to auth.html'; throw new Error('login')}
+document.getElementById('user').textContent='✅ '+user.email
+
+// 1. GET PROFILE & PLAN
+let {data:profile} = await supabase.from('profiles').select('*').eq('id',user.id).single()
+if(!profile){alert('Complete registration at auth.html'); location.href='auth.html'; throw new Error('no profile')}
+
+let now=new Date()
+let expiry=profile.subscription_expiry? new Date(profile.subscription_expiry): null
+let isExpired= expiry? now > expiry : false
+
+let planBox=document.getElementById('planBox')
+planBox.style.display='block'
+
+if(isExpired){
+ if(profile.business_type=='registered'){
+  planBox.innerHTML=`⏰ Plan Expired on ${expiry.toDateString()}<br>Registered Business: Pay <b>₦5,000 monthly</b> for UNLIMITED posting/day<br><button id="pay5k" style="margin-top:8px;background:#000;color:#fff;padding:10px;border-radius:10px;border:2px solid #000;font-weight:900">Pay ₦5k Now - Unlimited</button>`
+  document.getElementById('btn').disabled=true
+  document.getElementById('btn').textContent='Renew Subscription to Post'
+  setTimeout(()=>{
+   document.getElementById('pay5k').onclick=()=>{
+    PaystackPop.setup({
+     key:PAYSTACK_KEY,email:user.email,amount:5000*100,ref:'TP_RENEW_'+Date.now(),
+     callback:async(r)=>{
+      let newExpiry=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59)
+      await supabase.from('profiles').update({subscription_plan:'unlimited_5k',subscription_amount:5000,subscription_expiry:newExpiry.toISOString(),post_limit_per_day:999}).eq('id',user.id)
+      alert('✅ ₦5k Paid! Unlimited posting till '+newExpiry.toDateString()); location.reload()
+     }
+    }).openIframe()
+   }
+  },500)
+ }else{
+  planBox.innerHTML=`⏰ Plan Expired on ${expiry.toDateString()}<br>Unregistered Business: Renew <b>₦1,000</b> for 1 post/day till month end<br><button id="pay1k" style="margin-top:8px;background:#000;color:#fff;padding:10px;border-radius:10px;border:2px solid #000;font-weight:900">Pay ₦1k Renew</button><br><small>Upgrade to CAC later for unlimited</small>`
+  document.getElementById('btn').disabled=true
+  document.getElementById('btn').textContent='Renew Subscription to Post'
+  setTimeout(()=>{
+   document.getElementById('pay1k').onclick=()=>{
+    PaystackPop.setup({
+     key:PAYSTACK_KEY,email:user.email,amount:1000*100,ref:'TP_RENEW_'+Date.now(),
+     callback:async(r)=>{
+      let newExpiry=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59)
+      await supabase.from('profiles').update({subscription_plan:'starter_1k',subscription_amount:1000,subscription_expiry:newExpiry.toISOString(),post_limit_per_day:1}).eq('id',user.id)
+      alert('✅ ₦1k Paid! 1 post/day till '+newExpiry.toDateString()); location.reload()
+     }
+    }).openIframe()
+   }
+  },500)
+ }
+}else{
+ // Not expired - check today's limit
+ let limit=profile.post_limit_per_day||1
+ if(profile.subscription_plan=='unlimited_5k') limit=999
+
+ // count today's posts
+ let todayStart=new Date(); todayStart.setHours(0,0,0,0)
+ let {data:todayPosts}=await supabase.from('products').select('id').eq('seller_id',user.id).gte('created_at',todayStart.toISOString())
+ let count=todayPosts?.length||0
+
+ if(profile.business_type=='registered' && profile.subscription_plan=='free_cac'){
+  planBox.innerHTML=`✅ Registered FREE Plan: ${count}/${limit} posted today | Expires: ${expiry.toDateString()}<br>After expiry: Pay ₦5k/month for unlimited`
+ }else if(profile.business_type=='unregistered'){
+  planBox.innerHTML=`✅ Unregistered Plan: ${count}/${limit} posted today | Expires: ${expiry.toDateString()}<br>Upgrade to CAC for unlimited`
+ }else{
+  planBox.innerHTML=`✅ Unlimited Plan: ${count} posted today | Expires: ${expiry.toDateString()} | Unlimited/day`
+ }
+
+ if(count>=limit){
+  document.getElementById('btn').disabled=true
+  document.getElementById('btn').textContent=`Limit Reached: ${limit}/day - Try Tomorrow`
+  planBox.innerHTML+=`<br><br><b style="color:red">⚠️ You have posted ${count} product today. Daily limit is ${limit}. Come back tomorrow or upgrade to unlimited ₦5k/month (for CAC businesses).</b>`
+  // Allow upgrade button for unregistered to get CAC
+  if(profile.business_type=='unregistered'){
+   planBox.innerHTML+=`<br><br>Want unlimited? Register CAC and pay 5k/month. Contact Tobex 08163382655`
+  }
+ }
+}
+
+document.getElementById('btn').onclick=async()=>{
+ let b=document.getElementById('btn'); b.textContent='Uploading...'; b.disabled=true
+ try{
+  let f=document.getElementById('f1').files[0]; if(!f) throw new Error('Add photo')
+  let name=Date.now()+'_'+f.name.replace(/\s/g,'_')
+  let {error:upErr}=await supabase.storage.from('product-images').upload(name,f)
+  if(upErr) throw upErr
+  let {data:urlData}=supabase.storage.from('product-images').getPublicUrl(name)
+  let {data,error}=await supabase.from('products').insert({
+   title:title.value,
+   description:desc.value,
+   price:parseInt(price.value),
+   category:cat.value,
+   images:[urlData.publicUrl],
+   seller_id:user.id
+  }).select().single()
+  if(error) throw error
+  alert('SUCCESS! '+data.title+' posted!'); location.href='index.html'
+ }catch(e){alert('Error: '+e.message); b.textContent='Post Ad - REAL'; b.disabled=false}
+}
+</script></body></html>

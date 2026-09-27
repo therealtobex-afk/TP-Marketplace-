@@ -1,0 +1,64 @@
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;font-family:Inter,Arial,sans-serif;background:#fafaf9;padding-bottom:85px;color:#111;letter-spacing:-0.2px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid #000;position:sticky;top:0;background:#fff;z-index:10;box-shadow:0 2px 0 #000}
+.header h1{margin:0;font-size:19px;font-weight:900;letter-spacing:-0.8px;cursor:pointer}
+.header div span{cursor:pointer;transition:0.15s}
+.header div span:active{transform:scale(0.9)}
+.userBox{padding:10px 16px;background:#000;color:#fff;font-size:13px;border-bottom:2px solid #000}
+.userBox a{color:#facc15;text-decoration:none;font-weight:800}
+.search{margin:14px 12px;background:#fff;border:2px solid #000;border-radius:30px;padding:13px 18px;display:flex;gap:10px;align-items:center;box-shadow:4px 4px 0 #000}
+.search input{border:none;background:transparent;width:100%;outline:none;font-size:15px;font-weight:600}
+.btns{display:flex;gap:12px;padding:0 12px}
+.btns button{flex:1;padding:14px;border-radius:14px;font-weight:900;border:2px solid #000;cursor:pointer;box-shadow:3px 3px 0 #000;transition:0.15s}
+.btns button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.black{background:#000;color:#fff}
+.white{background:#fff;color:#000}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
+.cat{cursor:pointer;transition:0.15s}
+.cat:active{transform:scale(0.95)}
+.cat div{border:2px solid #000;border-radius:16px;height:76px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#fff;cursor:pointer;box-shadow:3px 3px 0 #000;transition:0.15s}
+.cat:hover div{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000}
+.cat p{font-size:11px;font-weight:900;text-align:center;margin-top:8px;letter-spacing:-0.2px}
+.cards{display:flex;gap:14px;overflow-x:auto;padding:4px 12px 18px;scrollbar-width:none}
+.cards::-webkit-scrollbar{display:none}
+.card{min-width:178px;max-width:178px;height:242px;border:2.5px solid #000;border-radius:20px;overflow:hidden;position:relative;background:#fff;cursor:pointer;box-shadow:4px 4px 0 #000;transition:0.18s;flex-shrink:0}
+.card:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000}
+.card img{transition:0.3s}
+.card:hover img{transform:scale(1.05)}
+.badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid #000;border-radius:20px;padding:4px 12px;font-size:10px;font-weight:900;box-shadow:2px 2px 0 #000;z-index:2}
+.bottom{position:fixed;bottom:0;width:100%;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-top:2.5px solid #000;display:flex;justify-content:space-around;padding:10px 0;z-index:20;box-shadow:0 -2px 0 #000}
+.bottom div{text-align:center;font-size:11px;font-weight:900;cursor:pointer;position:relative;line-height:1.1;transition:0.15s}
+.bottom div:active{transform:scale(0.9)}
+.cart-count{position:absolute;top:-8px;right:4px;background:#000;color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-weight:900}
+</style></head><body>
+<div class="header"><h1 onclick="location.href='index.html'">☰ TP MARKETPLACE 🏢</h1><div style="font-size:22px;display:flex;gap:14px"><span onclick="location.href='auth.html'">👤</span><span onclick="location.href='cart.html'">🛒<span id="cartCount" class="cart-count" style="display:none">0</span></span></div></div>
+<div id="userStatus" class="userBox">🔒 Checking login...</div>
+<div class="search">🔍 <input id="search" placeholder="Search products, brands and categories"></div>
+<div class="btns"><button class="black" onclick="alert('How to Buy: Click product > Pay with Paystack > Seller delivers')">How to Buy</button><button class="white" onclick="location.href='sell.html'">How to Sell</button></div>
+<div class="cats" id="cats"></div>
+<div style="padding:12px 16px 6px;display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0;font-style:italic;font-size:19px;font-weight:900;letter-spacing:-0.6px">Trending ads - Tobex Property</h3><span style="font-size:12px;border:2px solid #000;border-radius:20px;padding:5px 12px;cursor:pointer;font-weight:900;background:#fff;box-shadow:2px 2px 0 #000" onclick="loadProducts('')">All</span></div>
+<div class="cards" id="list">Loading real products from cloud...</div>
+<div class="bottom"><div onclick="location.href='index.html'">🏠<br>Home</div><div onclick="location.href='cart.html'">🛒<br>Cart</div><div onclick="location.href='sell.html'">➕<br>Sell</div><div onclick="location.href='messages.html'">💬<br>Messages</div><div onclick="handleProfile()">👤<br><span id="profileText">Admin</span></div></div>
+<script type="module">
+// @ts-nocheck
+import {supabase} from './supabaseClient.js'
+let {data:{user}} = await supabase.auth.getUser()
+let profile=null
+if(user){let {data}=await supabase.from('profiles').select('*').eq('id',user.id).single();profile=data;document.getElementById('userStatus').innerHTML=`✅ <b>${profile?.store_name||user.email}</b> | <a href="store.html?id=${user.id}">My Store 🏪</a> | <a href="#" onclick="logout()">Logout</a>`;document.getElementById('profileText').textContent='Store'}else{document.getElementById('userStatus').innerHTML=`🔒 Not logged in - <a href="auth.html"><b>Register/Login</b></a>`;document.getElementById('profileText').textContent='Login'}
+let cart=JSON.parse(localStorage.getItem('tp_cart')||'[]')
+let count=cart.reduce((sum,item)=>sum+(item.qty||1),0)
+if(count>0){document.getElementById('cartCount').style.display='flex';document.getElementById('cartCount').textContent=count}
+window.handleProfile=()=>{if(user)location.href=`store.html?id=${user.id}`;else location.href='auth.html'}
+window.logout=async()=>{await supabase.auth.signOut();location.reload()}
+const cats=[['📺','Electronics'],['🛋️','Home & Furniture'],['🚨','Beauty & Personal'],['👗','Fashion'],['🚗','Vehicles'],['🏠','Property'],['🍔','Foods'],['🔥','Trending']]
+document.getElementById('cats').innerHTML=cats.map(cat=>`<div class="cat" onclick="loadProducts('${cat[1]}')"><div>${cat[0]}</div><p>${cat[1]}</p></div>`).join('')
+window.loadProducts=async(f='')=>{
+ let q=supabase.from('products').select('*').order('created_at',{ascending:false})
+ if(f && f!='Trending' && f.length>2) q=q.ilike('category',`%${f}%`)
+ const {data}=await q
+ document.getElementById('list').innerHTML=data&&data.length?data.map(prod=>`<div class="card" onclick="location.href='product.html?id=${prod.id}'"><img src="${prod.images?.[0]||'https://via.placeholder.com/175'}" style="width:100%;height:100%;object-fit:cover"><div class="badge">Verified ID</div><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);padding:8px 10px;font-size:13px;font-weight:900;border-top:2px solid #000">₦${Number(prod.price).toLocaleString()}<br><span style="font-weight:600;font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prod.title.slice(0,22)}</span></div></div>`).join(''):'<div style=padding:20px>No products yet.</div>'
+}
+document.getElementById('search').addEventListener('input',e=>loadProducts(e.target.value))
+loadProducts()
+</script></body></html>
