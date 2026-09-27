@@ -1,54 +1,205 @@
-‎<!DOCTYPE html>
-‎<html>
-‎<head>
-‎<meta charset="UTF-8">
-‎<meta name="viewport" content="width=device-width,initial-scale=1">
-‎<title>TP Marketplace - Auth</title>
+‎<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
 ‎<script src="https://js.paystack.co/v1/inline.js"></script>
 ‎<style>
 ‎*{box-sizing:border-box}
-‎body{font-family:Inter,Arial,sans-serif;background:#fffefb;padding:16px;max-width:420px;margin:auto}
-‎h2{font-size:22px;font-weight:900;text-align:center}
-‎.card{border:2.5px solid #000;border-radius:18px;padding:18px;box-shadow:6px 6px 0 #000}
-‎label{font-size:12px;font-weight:900;text-transform:uppercase;display:block;margin:10px 0 5px}
-‎input,select{width:100%;padding:13px;border:2.5px solid #000;border-radius:10px;font-weight:600}
-‎button{width:100%;padding:15px;border:2.5px solid #000;border-radius:12px;font-weight:900;box-shadow:4px 4px 0 #000;margin-top:12px}
-‎.black{background:#000;color:#fff} .yellow{background:#ffe600}
-‎.plan{border:2.5px dashed #000;border-radius:12px;padding:12px;margin-top:12px;display:none}
-‎.plan.active{display:block}
-‎</style>
-‎</head>
-‎<body>
-‎<h2>TP MARKETPLACE 🔐</h2>
+‎body{font-family:Inter,Arial,sans-serif;padding:16px;max-width:540px;margin:auto;background:#fafaf9;color:#111;padding-bottom:90px}
+‎h2{font-size:22px;font-weight:900;text-align:center;border:2.5px solid #000;background:#fff;padding:14px;border-radius:16px;box-shadow:4px 4px 0 #000;letter-spacing:-0.7px}
+‎.card{border:2.5px solid #000;border-radius:18px;padding:16px;margin:14px 0;background:#fff;box-shadow:5px 5px 0 #000}
+‎label{font-size:12px;font-weight:900;margin-top:10px;display:block;text-transform:uppercase;letter-spacing:0.5px}
+‎input,select,textarea{width:100%;padding:13px;margin:6px 0 10px;border:2.5px solid #000;border-radius:12px;font-weight:700;font-size:14px;background:#fff;box-shadow:2px 2px 0 #000;outline:none}
+‎input:focus,select:focus,textarea:focus{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000}
+‎button{width:100%;padding:15px;border-radius:14px;font-weight:900;font-size:15px;border:2.5px solid #000;margin:8px 0;cursor:pointer;box-shadow:3px 3px 0 #000;transition:0.15s}
+‎button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+‎.black{background:#000;color:#fff}.yellow{background:#ffe600}.white{background:#fff}
+‎.badge{padding:6px 10px;border:2px solid #000;border-radius:20px;font-size:11px;font-weight:900;display:inline-block;margin:4px 0;background:#fff}
+‎.plan{border:2.5px dashed #000;border-radius:14px;padding:12px;margin:10px 0;background:#f8f8f8}
+‎.plan b{display:block;font-size:14px}
+‎small{font-size:11px;font-weight:600;color:#555}
+‎#msg{padding:12px;border:2.5px solid #000;border-radius:12px;display:none;font-weight:800;font-size:13px;margin-top:10px}
+‎a{font-weight:900;color:#000;text-decoration:none;border-bottom:2px solid #000}
+‎</style></head><body>
+‎
+‎<h2>🔐 TP MARKETPLACE - Business Registration</h2>
+‎
+‎<div class="card" id="loginBox">
+‎<h3 style="margin:0 0 10px">Login</h3>
+‎<input id="l_email" type="email" placeholder="Email">
+‎<input id="l_pass" type="password" placeholder="Password">
+‎<button class="black" id="loginBtn">Login</button>
+‎<p style="text-align:center"><small>Don't have account? Scroll down to register</small></p>
+‎</div>
+‎
 ‎<div class="card">
-‎<button id="showLogin" class="black">LOGIN</button>
-‎<button id="showRegister" class="yellow">REGISTER</button>
-‎<div id="msg" style="text-align:center;font-weight:700;margin:10px 0"></div>
-‎<div id="loginBox">
-‎<input id="loginEmail" placeholder="email"><input id="loginPass" type="password" placeholder="password">
-‎<button id="loginBtn" class="black">LOGIN</button>
+‎<h3>📝 New Seller Registration - Tobex Property 08163382655</h3>
+‎
+‎<label>1. Full Name *</label>
+‎<input id="name" placeholder="e.g Chukwu Tobex">
+‎
+‎<label>2. Email *</label>
+‎<input id="email" type="email" placeholder="your@email.com">
+‎
+‎<label>Password *</label>
+‎<input id="password" type="password" placeholder="Create password (6+ chars)">
+‎
+‎<label>3. Phone Number *</label>
+‎<input id="phone" placeholder="08163382655">
+‎
+‎<label>4. Date of Birth *</label>
+‎<input id="dob" type="date">
+‎
+‎<label>5. Country *</label>
+‎<select id="country"><option value="Nigeria" selected>Nigeria</option><option>Ghana</option><option>Kenya</option><option>Other</option></select>
+‎
+‎<label>6. State *</label>
+‎<input id="state" placeholder="e.g Lagos">
+‎
+‎<label>7. Means of Identification *</label>
+‎<select id="id_type"><option>NIN</option><option>Driver License</option><option>Voters Card</option><option>International Passport</option></select>
+‎<label>ID Photo (Front) * - Upload clear photo</label>
+‎<input id="id_photo" type="file" accept="image/*">
+‎
+‎<label>8. Business Address *</label>
+‎<textarea id="biz_address" placeholder="No 12 Computer Village Ikeja..."></textarea>
+‎
+‎<label>9 & 10. Business Type *</label>
+‎<select id="biz_type">
+‎<option value="unregistered">Unregistered Business (No CAC) - Pay ₦1,000 - Post 1/day till month end</option>
+‎<option value="registered">Registered Business (With CAC) - FREE first time - Post 1/day till month end</option>
+‎</select>
+‎
+‎<div id="cacBox">
+‎<label>CAC Document (Required for Registered) - Upload CAC Certificate</label>
+‎<input id="cac_doc" type="file" accept="image/*,.pdf">
 ‎</div>
-‎<div id="registerBox" style="display:none">
-‎<input id="regName" placeholder="Full Name"><input id="regEmail" placeholder="Email"><input id="regPass" type="password" placeholder="Min 6 chars">
-‎<select id="regRole"><option value="buyer">Buyer - Free</option><option value="seller">Seller - ₦1,000</option></select>
-‎<div id="sellerPlan" class="plan"><b>₦1,000 one-time</b> to sell</div>
-‎<button id="regBtn" class="yellow">REGISTER & PAY IF SELLER</button>
+‎
+‎<div class="plan" id="planInfo">
+‎<b id="planTitle">Unregistered Plan: ₦1,000</b>
+‎<small id="planDesc">You pay ₦1k now. You can post 1 product per day before month end. You can upgrade later when you get CAC. After month end you renew.</small>
 ‎</div>
+‎
+‎<label>Business/Store Name *</label>
+‎<input id="store_name" placeholder="e.g Tobex Gadgets">
+‎
+‎<button class="yellow" id="registerBtn">Pay & Register Now - Paystack LIVE</button>
+‎<div id="msg"></div>
+‎<p style="text-align:center;margin-top:14px"><a href="index.html">← Back Home</a></p>
 ‎</div>
+‎
 ‎<script type="module">
-‎import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-‎const SUPABASE_URL = "https://pbfgxiwwyvrnrcacfsxy.supabase.co";
-‎const SUPABASE_ANON_KEY = "sb_publishable_Y4oS569IiPZv6MtkKfUyqw_j3D6CQtV";
-‎const PAYSTACK_PUBLIC_KEY = "pk_live_d77d254d82edccc8ff474b8a5e0f10874cf93f49"; // PUT YOUR KEY
-‎const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-‎const msg=document.getElementById('msg');
-‎const showMsg=(t,e)=>{msg.style.color=e?'red':'green';msg.textContent=t}
-‎document.getElementById('showLogin').onclick=()=>{loginBox.style.display='block';registerBox.style.display='none'}
-‎document.getElementById('showRegister').onclick=()=>{loginBox.style.display='none';registerBox.style.display='block'}
-‎regRole.onchange=()=>{sellerPlan.classList.toggle('active',regRole.value==='seller')}; regRole.onchange();
-‎document.getElementById('loginBtn').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:loginEmail.value,password:loginPass.value}); if(error)return showMsg(error.message,1); showMsg('Login ok'); location.href='index.html'}
-‎document.getElementById('regBtn').onclick=async()=>{const name=regName.value,email=regEmail.value,pass=regPass.value,role=regRole.value; if(role==='buyer'){const {error}=await supabase.auth.signUp({email,password:pass,options:{data:{full_name:name,role}}}); if(error)return showMsg(error.message,1); showMsg('Check email to verify'); return} const h=PaystackPop.setup({key:PAYSTACK_PUBLIC_KEY,email,amount:100000,ref:'TP_'+Date.now(),callback:async(r)=>{const {error}=await supabase.auth.signUp({email,password:pass,options:{data:{full_name:name,role,paid:true,ref:r.reference}}}); if(error)return showMsg(error.message,1); showMsg('Seller paid & created! Login now'); loginBox.style.display='block';registerBox.style.display='none'},onClose:()=>showMsg('Payment cancelled',1)}); h.openIframe()}
-‎</script>
-‎</body>
-‎</html>
+‎import {supabase, PAYSTACK_KEY} from './supabaseClient.js'
+‎
+‎const show=(t,c)=>{let m=document.getElementById('msg');m.style.display='block';m.textContent=t;m.style.background=c||'#fff'; m.style.borderColor='#000'}
+‎
+‎document.getElementById('biz_type').onchange=()=>{
+‎let v=biz_type.value
+‎if(v=='unregistered'){
+‎  document.getElementById('planTitle').textContent='Unregistered Plan: ₦1,000'
+‎  document.getElementById('planDesc').textContent='Pay ₦1k now. Post 1 product/day before month end. Upgrade to CAC later for unlimited posting (₦5k/month).'
+‎  document.getElementById('cacBox').style.display='none'
+‎  registerBtn.textContent='Pay ₦1,000 & Register - Paystack LIVE'
+‎}else{
+‎  document.getElementById('planTitle').textContent='Registered Plan: FREE First Time'
+‎  document.getElementById('planDesc').textContent='FREE registration first time with CAC. Post 1 product/day till month end. After month end, pay ₦5k monthly for unlimited/day.'
+‎  document.getElementById('cacBox').style.display='block'
+‎  registerBtn.textContent='Register FREE - Upload CAC'
+‎}
+‎}
+‎document.getElementById('biz_type').onchange()
+‎
+‎// LOGIN
+‎document.getElementById('loginBtn').onclick=async()=>{
+‎let {error}=await supabase.auth.signInWithPassword({email:l_email.value,password:l_pass.value})
+‎if(error) alert(error.message); else location.href='index.html'
+‎}
+‎
+‎// REGISTER
+‎document.getElementById('registerBtn').onclick=async()=>{
+‎try{
+‎  // validations
+‎  if(!name.value ||!email.value ||!password.value ||!phone.value ||!dob.value ||!state.value ||!biz_address.value ||!store_name.value) throw new Error('Fill all * fields')
+‎  if(!id_photo.files[0]) throw new Error('Upload ID Photo')
+‎  if(biz_type.value=='registered' &&!cac_doc.files[0]) throw new Error('Upload CAC for registered business')
+‎
+‎  let btn=registerBtn; btn.textContent='Processing...'; btn.disabled=true
+‎
+‎  let bizType=biz_type.value
+‎  let amount= bizType=='unregistered'? 1000 : 0
+‎  let payRef='TP_REG_'+Date.now()
+‎
+‎  // Function to finish registration after payment (or free)
+‎  const finishReg=async(paystackRef)=>{
+‎   // 1. upload ID photo
+‎   let idName=Date.now()+'_ID_'+id_photo.files[0].name.replace(/\s/g,'_')
+‎   let {error:up1}=await supabase.storage.from('kyc-docs').upload(idName,id_photo.files[0])
+‎   if(up1) throw up1
+‎   let {data:idUrl}=supabase.storage.from('kyc-docs').getPublicUrl(idName)
+‎
+‎   // 2. upload CAC if exists
+‎   let cacUrl=null
+‎   if(cac_doc.files[0]){
+‎    let cacName=Date.now()+'_CAC_'+cac_doc.files[0].name.replace(/\s/g,'_')
+‎    let {error:up2}=await supabase.storage.from('kyc-docs').upload(cacName,cac_doc.files[0])
+‎    if(up2) throw up2
+‎    let {data:cacData}=supabase.storage.from('kyc-docs').getPublicUrl(cacName)
+‎    cacUrl=cacData.publicUrl
+‎   }
+‎
+‎   // 3. create auth user
+‎   let {data:signData,error:signErr}=await supabase.auth.signUp({email:email.value,password:password.value})
+‎   if(signErr) throw signErr
+‎   let user=signData.user
+‎   if(!user) throw new Error('Check email to confirm, then login')
+‎
+‎   // 4. calc expiry = month end
+‎   let now=new Date()
+‎   let monthEnd=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59)
+‎
+‎   // 5. insert profile
+‎   let {error:profErr}=await supabase.from('profiles').insert({
+‎    id:user.id,
+‎    email:email.value,
+‎    full_name:name.value,
+‎    phone:phone.value,
+‎    dob:dob.value,
+‎    country:country.value,
+‎    state:state.value,
+‎    id_type:id_type.value,
+‎    id_photo_url:idUrl.publicUrl,
+‎    business_address:biz_address.value,
+‎    business_type:bizType,
+‎    store_name:store_name.value,
+‎    cac_document_url:cacUrl,
+‎    role:'seller',
+‎    subscription_plan: bizType=='unregistered'? 'starter_1k' : 'free_cac',
+‎    subscription_amount: amount,
+‎    subscription_expiry: monthEnd.toISOString(),
+‎    post_limit_per_day:1,
+‎    paystack_ref:paystackRef||'FREE_FIRST',
+‎    verified:false
+‎   })
+‎   if(profErr) throw profErr
+‎
+‎   alert('✅ Registration SUCCESS! '+store_name.value+'\nPlan: '+(bizType=='unregistered'?'₦1k - 1/day':'FREE CAC - 1/day')+' till '+monthEnd.toDateString()+'\nAfter that: Unregistered renew 1k, Registered pay 5k/month for unlimited.\nNow login!');
+‎   location.href='auth.html'
+‎  }
+‎
+‎  if(amount>0){
+‎   // Paystack for unregistered 1k
+‎   PaystackPop.setup({
+‎    key:PAYSTACK_KEY,
+‎    email:email.value,
+‎    amount:amount*100,
+‎    ref:payRef,
+‎    metadata:{custom_fields:[{display_name:'Business Reg for Tobex 08163382655',variable_name:'plan',value:'unregistered_1k'}]},
+‎    callback:(r)=>{ finishReg(r.reference).catch(e=>{alert(e.message); btn.disabled=false; btn.textContent='Pay & Register Now'}) },
+‎    onClose:()=>{btn.disabled=false; btn.textContent='Pay ₦1,000 & Register - Paystack LIVE'; show('Payment cancelled',' #ffd1d1')}
+‎   }).openIframe()
+‎  }else{
+‎   // Free for CAC first time
+‎   await finishReg('FREE_CAC_FIRST')
+‎  }
+‎
+‎}catch(e){alert('Error: '+e.message); document.getElementById('registerBtn').disabled=false; document.getElementById('registerBtn').textContent='Pay & Register Now - Paystack LIVE'}
+‎}
+‎</script></body></html>
 ‎
